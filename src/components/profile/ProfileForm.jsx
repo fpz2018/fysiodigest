@@ -3,11 +3,42 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 
-const SPECIALISATIES = [
-  'Artrose', 'Sportfysiotherapie', 'Bekkenbodem', 'Manuele therapie',
-  'Oncologie', 'Neurologie', 'Orthomoleculaire therapie', 'Geriatrie',
+const SPECIALISATIE_GROEPEN = [
+  {
+    titel: 'Per gewricht',
+    items: [
+      'Schouder', 'Elleboog', 'Pols / Hand', 'Heup', 'Knie', 'Enkel / Voet',
+      'Wervelkolom (cervicaal)', 'Wervelkolom (thoracaal)', 'Wervelkolom (lumbaal)',
+      'Bekken / SI-gewricht',
+    ],
+  },
+  {
+    titel: 'Overig klinisch',
+    items: [
+      'Sportfysiotherapie', 'Valpreventie', 'COPD / Longrevalidatie',
+      'Oncologische fysiotherapie', 'Neurologie', 'Geriatrie',
+      'Bekkenbodemfysiotherapie', 'Pediatrie', 'Reumatologie',
+      'Cardiale revalidatie', 'Orthomoleculaire therapie', 'Energetische fysiotherapie',
+    ],
+  },
+  {
+    titel: 'Masters / Specialisaties',
+    items: [
+      'Master Manuele Therapie', 'Master Sportfysiotherapie',
+      'Master Psychosomatische Fysiotherapie', 'Master Fysiotherapie bij Ouderen',
+      'Master Bekkenbodemfysiotherapie', 'Master Kinderfysiotherapie',
+      'Master Neurorevalidatie',
+    ],
+  },
 ]
-const VERZEKERAARS = ['Menzis', 'CZ', 'VGZ', 'Zilveren Kruis', 'ENO', 'ONVZ']
+
+const VERZEKERAAR_GROEPEN = [
+  { titel: 'Achmea', items: ['Zilveren Kruis', 'FBTO', 'Interpolis', 'De Friesland', 'De Christelijke Zorgverzekeraar', 'ZieZo'] },
+  { titel: 'VGZ',    items: ['VGZ', 'Univé', 'IZA', 'IZZ', 'Bewuzt', 'Promovendum'] },
+  { titel: 'CZ',     items: ['CZ', 'CZdirect', 'Just', 'OHRA', 'Nationale Nederlanden'] },
+  { titel: 'Menzis', items: ['Menzis', 'Anderzorg', 'VinkVink'] },
+  { titel: 'Overig', items: ['DSW', 'Stad Holland', 'Zorg en Zekerheid', 'a.s.r.', 'ONVZ', 'VvAA', 'Aevitae', 'Salland', 'HollandZorg', 'ENO', 'UnitedConsumers', 'ZEKUR'] },
+]
 
 const PRAKTIJKVORMEN = [
   { value: 'bv_niet_uitvoerend',          label: 'BV – niet uitvoerend fysiotherapeut' },
@@ -20,12 +51,58 @@ const PRAKTIJKVORMEN = [
   { value: 'zzp_leefstijlcoach',          label: 'ZZP – leefstijlcoach' },
 ]
 
-const STANDAARD_BRONNEN = [
-  { naam: 'KNGF Nieuws', url: 'https://www.kngf.nl/rss', categorie: 'richtlijnen' },
-  { naam: 'NZa Nieuws', url: 'https://www.nza.nl/rss', categorie: 'regelgeving' },
-  { naam: 'PubMed Fysiotherapie', url: 'https://pubmed.ncbi.nlm.nih.gov/rss/search/?term=physiotherapy', categorie: 'wetenschap' },
-  { naam: 'FysioPraxis', url: 'https://www.fysiopraxis.nl/rss', categorie: 'vakbladen' },
+const BRON_GROEPEN = [
+  {
+    titel: 'Fysiotherapie & Zorg',
+    items: [
+      { naam: 'KNGF Nieuws', url: 'https://www.kngf.nl/rss' },
+      { naam: 'FysioPraxis', url: 'https://www.fysiopraxis.nl/rss' },
+      { naam: 'NZa Nieuws', url: 'https://puc.overheid.nl/nza/rss' },
+      { naam: 'ZiN / Zorginstituut', url: 'https://www.zorginstituutnederland.nl/rss' },
+      { naam: 'Rijksoverheid Zorg', url: 'https://www.rijksoverheid.nl/onderwerpen/zorg/rss' },
+      { naam: 'IGJ (Inspectie)', url: 'https://www.igj.nl/rss' },
+      { naam: 'Wetten.nl (nieuwe wetgeving)', url: 'https://www.officielebekendmakingen.nl/rss/staatscourant' },
+    ],
+  },
+  {
+    titel: 'Wetenschap',
+    items: [
+      { naam: 'PubMed Fysiotherapie', url: 'https://pubmed.ncbi.nlm.nih.gov/rss/search/?term=physiotherapy+randomized+controlled+trial' },
+      { naam: 'PubMed Artrose', url: 'https://pubmed.ncbi.nlm.nih.gov/rss/search/?term=osteoarthritis+exercise+therapy' },
+      { naam: 'Cochrane Reviews', url: 'https://www.cochranelibrary.com/feed/cochrane-reviews' },
+    ],
+  },
+  {
+    titel: 'Ondernemen & Fiscaal',
+    items: [
+      { naam: 'KVK Nieuws', url: 'https://www.kvk.nl/rss' },
+      { naam: 'Ondernemersplein', url: 'https://www.ondernemersplein.nl/rss' },
+      { naam: 'Belastingdienst', url: 'https://www.belastingdienst.nl/rss' },
+      { naam: 'MKB Nederland', url: 'https://www.mkb.nl/rss' },
+      { naam: 'Accountancy Vanmorgen', url: 'https://www.accountancyvanmorgen.nl/feed' },
+    ],
+  },
+  {
+    titel: 'Subsidies & Financiering',
+    items: [
+      { naam: 'RVO (subsidies)', url: 'https://www.rvo.nl/rss' },
+      { naam: 'Zorgsubsidies Rijksoverheid', url: 'https://www.rijksoverheid.nl/onderwerpen/subsidies-zorg/rss' },
+      { naam: 'Stimulus Programmamanagement', url: 'https://www.stimuliz.nl/rss' },
+    ],
+  },
+  {
+    titel: 'Financieel & Economisch',
+    items: [
+      { naam: 'FD Economie', url: 'https://fd.nl/rss/economie' },
+      { naam: 'Nu.nl Economie', url: 'https://www.nu.nl/rss/economie' },
+      { naam: 'RTL Nieuws Economie', url: 'https://www.rtlnieuws.nl/rss/economie' },
+    ],
+  },
 ]
+
+const STANDAARD_BRONNEN = BRON_GROEPEN.flatMap(g =>
+  g.items.map(b => ({ ...b, categorie: g.titel }))
+)
 
 export default function ProfileForm({ initial = null }) {
   const { user } = useAuth()
@@ -129,17 +206,22 @@ export default function ProfileForm({ initial = null }) {
       )}
 
       {stap === 2 && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <h2 className="font-semibold text-lg">Specialisaties</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {SPECIALISATIES.map(s => (
-              <label key={s} className="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-slate-50">
-                <input type="checkbox" checked={specialisaties.includes(s)}
-                  onChange={() => toggle(specialisaties, setSpecialisaties, s)} />
-                <span className="text-sm">{s}</span>
-              </label>
-            ))}
-          </div>
+          {SPECIALISATIE_GROEPEN.map(groep => (
+            <div key={groep.titel}>
+              <h3 className="text-sm font-semibold text-navy mb-2">{groep.titel}</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {groep.items.map(s => (
+                  <label key={s} className="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-slate-50">
+                    <input type="checkbox" checked={specialisaties.includes(s)}
+                      onChange={() => toggle(specialisaties, setSpecialisaties, s)} />
+                    <span className="text-sm">{s}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
           <div>
             <label className="block text-sm font-medium mb-1">Overig</label>
             <input value={overigSpec} onChange={e => setOverigSpec(e.target.value)}
@@ -149,17 +231,22 @@ export default function ProfileForm({ initial = null }) {
       )}
 
       {stap === 3 && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <h2 className="font-semibold text-lg">Zorgverzekeraars</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {VERZEKERAARS.map(v => (
-              <label key={v} className="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-slate-50">
-                <input type="checkbox" checked={verzekeraars.includes(v)}
-                  onChange={() => toggle(verzekeraars, setVerzekeraars, v)} />
-                <span className="text-sm">{v}</span>
-              </label>
-            ))}
-          </div>
+          {VERZEKERAAR_GROEPEN.map(groep => (
+            <div key={groep.titel}>
+              <h3 className="text-sm font-semibold text-navy mb-2">{groep.titel}</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {groep.items.map(v => (
+                  <label key={v} className="flex items-center gap-2 p-2 border border-slate-200 rounded hover:bg-slate-50">
+                    <input type="checkbox" checked={verzekeraars.includes(v)}
+                      onChange={() => toggle(verzekeraars, setVerzekeraars, v)} />
+                    <span className="text-sm">{v}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
           <div>
             <label className="block text-sm font-medium mb-1">Overig</label>
             <input value={overigVerz} onChange={e => setOverigVerz(e.target.value)}
@@ -198,22 +285,31 @@ export default function ProfileForm({ initial = null }) {
       )}
 
       {stap === 5 && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <h2 className="font-semibold text-lg">Bronnen</h2>
           <p className="text-sm text-slate-600">Selecteer welke bronnen FysioDigest voor je moet monitoren.</p>
-          <div className="space-y-2">
-            {bronnen.map((b, i) => (
-              <label key={b.url} className="flex items-center gap-3 p-3 border border-slate-200 rounded">
-                <input type="checkbox" checked={b.actief}
-                  onChange={() => setBronnen(bronnen.map((x, j) => j === i ? { ...x, actief: !x.actief } : x))} />
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{b.naam}</div>
-                  <div className="text-xs text-slate-500">{b.url}</div>
-                </div>
-                <span className="text-xs bg-slate-100 px-2 py-1 rounded">{b.categorie}</span>
-              </label>
-            ))}
-          </div>
+          {BRON_GROEPEN.map(groep => (
+            <div key={groep.titel}>
+              <h3 className="text-sm font-semibold text-navy mb-2">{groep.titel}</h3>
+              <div className="space-y-2">
+                {groep.items.map(item => {
+                  const i = bronnen.findIndex(x => x.url === item.url)
+                  const b = bronnen[i]
+                  if (!b) return null
+                  return (
+                    <label key={b.url} className="flex items-center gap-3 p-3 border border-slate-200 rounded">
+                      <input type="checkbox" checked={b.actief}
+                        onChange={() => setBronnen(bronnen.map((x, j) => j === i ? { ...x, actief: !x.actief } : x))} />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{b.naam}</div>
+                        <div className="text-xs text-slate-500">{b.url}</div>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
           <div className="border-t border-slate-200 pt-4">
             <p className="text-sm font-medium mb-2">Eigen bron toevoegen (optioneel)</p>
             <div className="grid grid-cols-2 gap-2">

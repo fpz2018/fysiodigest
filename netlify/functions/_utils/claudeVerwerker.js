@@ -1,8 +1,8 @@
-const Anthropic = require('@anthropic-ai/sdk');
+import Anthropic from '@anthropic-ai/sdk'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-async function verwerkItem(item, gebruikersProfiel) {
+export async function verwerkItem(item, gebruikersProfiel) {
   const profielContext = `
 Naam: ${gebruikersProfiel.naam}
 Specialisaties: ${(gebruikersProfiel.specialisaties || []).join(', ')}
@@ -10,7 +10,7 @@ Praktijkvorm: ${gebruikersProfiel.praktijkvorm || 'onbekend'}
 Zorgverzekeraars: ${(gebruikersProfiel.zorgverzekeraars || []).join(', ')}
 Interessegebieden: ${gebruikersProfiel.interessegebieden || ''}
 Gewenste outputformaat: ${gebruikersProfiel.output_formaat || 'bullet'}
-  `.trim();
+  `.trim()
 
   const systemPrompt = `Je bent een assistent die nieuws en onderzoek verwerkt voor fysiotherapeuten in Nederland.
 Je taak: analyseer een item en maak een gepersonaliseerde digest-entry op basis van het gebruikersprofiel.
@@ -22,7 +22,7 @@ Regels:
 - categorie: kies uit: richtlijnen / regelgeving / wetenschap / vakbladen / verzekeraars / opleidingen / ondernemen / subsidies / overig
 - relevant: true als het item relevant is voor dit profiel, false als het volledig irrelevant is
 
-Antwoord uitsluitend in JSON. Geen markdown, geen uitleg, geen backticks.`;
+Antwoord uitsluitend in JSON. Geen markdown, geen uitleg, geen backticks.`
 
   const userPrompt = `Gebruikersprofiel:
 ${profielContext}
@@ -32,7 +32,7 @@ Titel: ${item.titel}
 Inhoud: ${(item.inhoud || '').substring(0, 1500)}
 Bron: ${item.bron_url}
 
-Verwerk dit naar een digest-item voor deze gebruiker.`;
+Verwerk dit naar een digest-item voor deze gebruiker.`
 
   try {
     const response = await client.messages.create({
@@ -40,10 +40,10 @@ Verwerk dit naar een digest-item voor deze gebruiker.`;
       max_tokens: 500,
       messages: [{ role: 'user', content: userPrompt }],
       system: systemPrompt,
-    });
+    })
 
-    const tekst = response.content[0].text.trim().replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(tekst);
+    const tekst = response.content[0].text.trim().replace(/```json|```/g, '').trim()
+    const parsed = JSON.parse(tekst)
 
     return {
       headline: parsed.headline || item.titel,
@@ -51,17 +51,15 @@ Verwerk dit naar een digest-item voor deze gebruiker.`;
       prioriteit: parsed.prioriteit || 'grijs',
       categorie: parsed.categorie || 'overig',
       relevant: parsed.relevant !== false,
-    };
+    }
   } catch (err) {
-    console.error('Claude verwerking mislukt:', err.message);
+    console.error('Claude verwerking mislukt:', err.message)
     return {
       headline: (item.titel || '').substring(0, 80),
       praktijkimpact: 'Verwerking mislukt. Bekijk het originele artikel via de bronlink.',
       prioriteit: 'grijs',
       categorie: 'overig',
       relevant: true,
-    };
+    }
   }
 }
-
-module.exports = { verwerkItem };

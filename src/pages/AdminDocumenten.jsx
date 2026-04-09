@@ -49,9 +49,11 @@ export default function AdminDocumenten() {
     setRssBezig(true); setRssMelding('')
     try {
       const res = await fetch('/.netlify/functions/verwerk-rss')
-      const data = await res.json()
-      if (data.success) setRssMelding(`Klaar. ${data.nieuwe_items} nieuwe items voor ${data.gebruikers} gebruiker(s).`)
-      else setRssMelding('Fout: ' + (data.error || 'onbekend'))
+      const tekst = await res.text()
+      let data = {}
+      try { data = JSON.parse(tekst) } catch { /* leeg */ }
+      if (res.ok && data.success) setRssMelding(`Klaar. ${data.nieuwe_items} nieuwe items voor ${data.gebruikers} gebruiker(s).`)
+      else setRssMelding(`Fout (${res.status}): ${data.error || tekst.slice(0, 200) || 'geen response'}`)
     } catch (e) {
       setRssMelding('Fout: ' + e.message)
     } finally { setRssBezig(false) }

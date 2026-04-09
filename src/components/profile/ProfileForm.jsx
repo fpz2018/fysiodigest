@@ -9,6 +9,17 @@ const SPECIALISATIES = [
 ]
 const VERZEKERAARS = ['Menzis', 'CZ', 'VGZ', 'Zilveren Kruis', 'ENO', 'ONVZ']
 
+const PRAKTIJKVORMEN = [
+  { value: 'bv_niet_uitvoerend',          label: 'BV – niet uitvoerend fysiotherapeut' },
+  { value: 'bv_uitvoerend',               label: 'BV – uitvoerend fysiotherapeut' },
+  { value: 'eenmanszaak_niet_uitvoerend', label: 'Eenmanszaak – niet uitvoerend fysiotherapeut' },
+  { value: 'eenmanszaak_uitvoerend',      label: 'Eenmanszaak – uitvoerend fysiotherapeut' },
+  { value: 'loondienst_fysiotherapeut',   label: 'Loondienst – fysiotherapeut' },
+  { value: 'loondienst_admmedew',         label: 'Loondienst – administratief medewerker' },
+  { value: 'zzp_fysiotherapeut',          label: 'ZZP – fysiotherapeut' },
+  { value: 'zzp_leefstijlcoach',          label: 'ZZP – leefstijlcoach' },
+]
+
 const STANDAARD_BRONNEN = [
   { naam: 'KNGF Nieuws', url: 'https://www.kngf.nl/rss', categorie: 'richtlijnen' },
   { naam: 'NZa Nieuws', url: 'https://www.nza.nl/rss', categorie: 'regelgeving' },
@@ -25,7 +36,7 @@ export default function ProfileForm({ initial = null }) {
 
   const [naam, setNaam] = useState(initial?.naam || '')
   const [praktijk, setPraktijk] = useState(initial?.praktijk || '')
-  const [praktijkvorm, setPraktijkvorm] = useState(initial?.praktijkvorm || 'zzp')
+  const [praktijkvorm, setPraktijkvorm] = useState(initial?.praktijkvorm || 'zzp_fysiotherapeut')
   const [specialisaties, setSpecialisaties] = useState(initial?.specialisaties || [])
   const [overigSpec, setOverigSpec] = useState('')
   const [verzekeraars, setVerzekeraars] = useState(initial?.zorgverzekeraars || [])
@@ -109,10 +120,9 @@ export default function ProfileForm({ initial = null }) {
             <label className="block text-sm font-medium mb-1">Praktijkvorm</label>
             <select value={praktijkvorm} onChange={e => setPraktijkvorm(e.target.value)}
               className="w-full border border-slate-300 rounded px-3 py-2">
-              <option value="zzp">ZZP</option>
-              <option value="groepspraktijk">Groepspraktijk</option>
-              <option value="msb">MSB</option>
-              <option value="loondienst">Loondienst</option>
+              {PRAKTIJKVORMEN.map(p => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
             </select>
           </div>
         </div>

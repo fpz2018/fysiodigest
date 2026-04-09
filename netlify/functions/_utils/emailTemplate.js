@@ -14,7 +14,7 @@ export function buildEmailHtml({ naam, weekNummer, datumRange, items, appUrl }) 
         <div style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 8px; line-height: 1.4;">
           ${escapeHtml(item.headline || item.titel || '')}
         </div>
-        <div style="font-size: 14px; color: #374151; line-height: 1.6; margin-bottom: 10px;">
+        <div style="font-size: 14px; color: #374151; line-height: 1.6; margin-bottom: 10px; white-space: pre-line;">
           ${escapeHtml(item.praktijkimpact || '')}
         </div>
         ${item.bron_url ? `<a href="${item.bron_url}" style="font-size: 13px; color: #2563EB; text-decoration: none; font-weight: 500;">→ Lees volledig artikel</a>` : ''}

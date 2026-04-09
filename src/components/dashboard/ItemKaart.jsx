@@ -74,7 +74,7 @@ export default function ItemKaart({ item, userId, onUpdate }) {
 
       <h3 className="text-base font-semibold text-gray-900 mb-2">{item.headline || item.titel}</h3>
       {item.praktijkimpact && (
-        <p className="text-sm text-gray-600 mb-4">{item.praktijkimpact}</p>
+        <p className="text-sm text-gray-600 mb-4 whitespace-pre-line font-mono-safe">{item.praktijkimpact}</p>
       )}
 
       <div className="flex flex-wrap gap-2 text-xs">

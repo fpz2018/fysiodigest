@@ -22,17 +22,22 @@ function getWeekNumber(datum) {
 }
 
 const prioVolgorde = { rood: 0, geel: 1, grijs: 2 }
+const belangVolgorde = { hoog: 0, middel: 1, laag: 2 }
 
-function sorteerItems(items) {
+function sorteerItems(items, profiel) {
+  const voorkeuren = profiel?.categorie_voorkeuren || {}
   return [...items].sort((a, b) => {
     if (a.gelezen !== b.gelezen) return a.gelezen ? 1 : -1
     const p = (prioVolgorde[a.prioriteit] ?? 2) - (prioVolgorde[b.prioriteit] ?? 2)
     if (p !== 0) return p
-    return new Date(b.gepubliceerd_op || 0) - new Date(a.gepubliceerd_op || 0)
+    const bA = belangVolgorde[voorkeuren[a.categorie]?.belang] ?? 1
+    const bB = belangVolgorde[voorkeuren[b.categorie]?.belang] ?? 1
+    if (bA !== bB) return bA - bB
+    return new Date(b.verwerkt_op || b.gepubliceerd_op || 0) - new Date(a.verwerkt_op || a.gepubliceerd_op || 0)
   })
 }
 
-export function useDigestItems(userId, weekOffset = 0) {
+export function useDigestItems(userId, weekOffset = 0, profiel = null) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
@@ -51,9 +56,9 @@ export function useDigestItems(userId, weekOffset = 0) {
       .eq('user_id', userId)
       .gte('verwerkt_op', weekRange.start.toISOString())
       .lte('verwerkt_op', weekRange.eind.toISOString())
-    setItems(sorteerItems(data || []))
+    setItems(sorteerItems(data || [], profiel))
     setLoading(false)
-  }, [userId, weekRange.start, weekRange.eind])
+  }, [userId, weekRange.start, weekRange.eind, profiel])
 
   useEffect(() => { laadItems() }, [laadItems])
 
@@ -86,7 +91,7 @@ export function useDigestItems(userId, weekOffset = 0) {
   }), [items])
 
   const updateItem = (id, patch) => {
-    setItems(prev => sorteerItems(prev.map(i => i.id === id ? { ...i, ...patch } : i)))
+    setItems(prev => sorteerItems(prev.map(i => i.id === id ? { ...i, ...patch } : i), profiel))
   }
 
   return {

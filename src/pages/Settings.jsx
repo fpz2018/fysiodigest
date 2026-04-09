@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import ProfileForm from '../components/profile/ProfileForm'
+import CategorieVoorkeuren from '../components/settings/CategorieVoorkeuren'
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth()
@@ -76,6 +77,8 @@ export default function Settings() {
           )}
         </section>
       )}
+
+      {profile && <CategorieVoorkeuren userId={user.id} initial={profile.categorie_voorkeuren} />}
 
       <ProfileForm initial={profile} />
     </div>

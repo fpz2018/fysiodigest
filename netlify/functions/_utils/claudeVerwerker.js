@@ -19,6 +19,16 @@ Gewenste outputformaat: ${gebruikersProfiel.output_formaat || 'bullet'}
     tabel:  'praktijkimpact: schrijf als 2 aspect-waarde paren gescheiden door " | " (bijv. "Wat: omschrijving | Actie: wat te doen")',
   }[gebruikersProfiel.output_formaat] || 'praktijkimpact: schrijf als 2 vloeiende zinnen'
 
+  const voorkeuren = gebruikersProfiel.categorie_voorkeuren || {}
+  const drempelOverzicht = Object.entries(voorkeuren)
+    .map(([cat, v]) => `  - ${cat}: drempel=${v.drempel}, belang=${v.belang}`)
+    .join('\n') || '  (geen voorkeuren — gebruik geel als standaard)'
+  const drempelInstructie = `Drempelregels per categorie (bepaal eerst de categorie, hanteer dan de drempel):
+${drempelOverzicht}
+- drempel "rood": markeer alleen als "rood" wanneer directe actie vereist is, anders relevant: false
+- drempel "geel": markeer als "rood" bij directe actie, "geel" bij praktijkrelevantie, anders relevant: false alleen bij volledige irrelevantie
+- drempel "grijs": markeer altijd als relevant tenzij het echt niets met fysiotherapie of ondernemen te maken heeft`
+
   const systemPrompt = `Je bent een assistent die nieuws en onderzoek verwerkt voor fysiotherapeuten in Nederland.
 Je taak: analyseer een item en maak een gepersonaliseerde digest-entry op basis van het gebruikersprofiel.
 
@@ -28,6 +38,8 @@ Regels:
 - prioriteit: "rood" (directe actie vereist), "geel" (relevant maar niet urgent), "grijs" (goed om te weten)
 - categorie: kies uit: richtlijnen / regelgeving / wetenschap / vakbladen / verzekeraars / opleidingen / ondernemen / subsidies / overig
 - relevant: true als het item relevant is voor dit profiel, false als het volledig irrelevant is
+
+${drempelInstructie}
 
 Antwoord uitsluitend in JSON met exact deze keys: headline, praktijkimpact, prioriteit, categorie, relevant.
 Gebruik \\n voor nieuwe regels binnen het praktijkimpact veld. Geen markdown, geen uitleg, geen backticks.`

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { DEFAULT_VOORKEUREN } from '../../lib/categorieVoorkeuren'
 
 export const SPECIALISATIE_GROEPEN = [
   {
@@ -150,6 +151,7 @@ export default function ProfileForm({ initial = null }) {
       zorgverzekeraars: finalVerz,
       interessegebieden: interesse,
       output_formaat: output,
+      categorie_voorkeuren: initial?.categorie_voorkeuren || DEFAULT_VOORKEUREN,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
     if (pErr) { setFout('Opslaan profiel mislukt: ' + pErr.message); setBezig(false); return }

@@ -2,6 +2,13 @@ import { supabase } from './_utils/supabaseAdmin.js'
 import { fetchRssFeed } from './_utils/rssParser.js'
 import { verwerkItem } from './_utils/claudeVerwerker.js'
 
+function isItemZichtbaar(item, categorieVoorkeuren) {
+  const voorkeur = categorieVoorkeuren?.[item.categorie]
+  if (!voorkeur) return true
+  const vol = { rood: 0, geel: 1, grijs: 2 }
+  return (vol[item.prioriteit] ?? 2) <= (vol[voorkeur.drempel] ?? 2)
+}
+
 export const handler = async (event) => {
   const userId = event?.queryStringParameters?.user_id || null
   const maxItems = parseInt(event?.queryStringParameters?.max || '15', 10)
@@ -83,6 +90,7 @@ async function verwerkGebruiker(profiel, maxItems, bronOffset, deadline) {
       const verwerkt = await verwerkItem(item, profiel)
       bestaandeUrls.add(item.bron_url)
       if (!verwerkt.relevant) continue
+      if (!isItemZichtbaar(verwerkt, profiel.categorie_voorkeuren)) continue
 
       const { error: insErr } = await supabase.from('digest_items').insert({
         source_id: bron.id,

@@ -19,18 +19,20 @@ const CAT_LABEL = {
 export default function Dashboard() {
   const { user } = useAuth()
   const [weekOffset, setWeekOffset] = useState(0)
-  const {
-    alleItems, items, statistieken, weekRange, loading, filters, setFilters, herlaad, updateItem,
-  } = useDigestItems(user?.id, weekOffset)
-
-  const [rssBezig, setRssBezig] = useState(false)
-  const [outputFormaat, setOutputFormaat] = useState('proza')
+  const [profiel, setProfiel] = useState(null)
 
   useEffect(() => {
     if (!user?.id) return
-    supabase.from('profiles').select('output_formaat').eq('user_id', user.id).maybeSingle()
-      .then(({ data }) => setOutputFormaat(data?.output_formaat || 'proza'))
+    supabase.from('profiles').select('output_formaat, categorie_voorkeuren').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => setProfiel(data || {}))
   }, [user?.id])
+
+  const {
+    alleItems, items, statistieken, weekRange, loading, filters, setFilters, herlaad, updateItem,
+  } = useDigestItems(user?.id, weekOffset, profiel)
+
+  const [rssBezig, setRssBezig] = useState(false)
+  const outputFormaat = profiel?.output_formaat || 'proza'
 
   const triggerRss = async () => {
     setRssBezig(true)

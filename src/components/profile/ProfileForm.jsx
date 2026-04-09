@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 
-const SPECIALISATIE_GROEPEN = [
+export const SPECIALISATIE_GROEPEN = [
   {
     titel: 'Per gewricht',
     items: [
@@ -32,7 +32,7 @@ const SPECIALISATIE_GROEPEN = [
   },
 ]
 
-const VERZEKERAAR_GROEPEN = [
+export const VERZEKERAAR_GROEPEN = [
   { titel: 'Achmea', items: ['Zilveren Kruis', 'FBTO', 'Interpolis', 'De Friesland', 'De Christelijke Zorgverzekeraar', 'ZieZo'] },
   { titel: 'VGZ',    items: ['VGZ', 'Univé', 'IZA', 'IZZ', 'Bewuzt', 'Promovendum'] },
   { titel: 'CZ',     items: ['CZ', 'CZdirect', 'Just', 'OHRA', 'Nationale Nederlanden'] },
@@ -40,7 +40,7 @@ const VERZEKERAAR_GROEPEN = [
   { titel: 'Overig', items: ['DSW', 'Stad Holland', 'Zorg en Zekerheid', 'a.s.r.', 'ONVZ', 'VvAA', 'Aevitae', 'Salland', 'HollandZorg', 'ENO', 'UnitedConsumers', 'ZEKUR'] },
 ]
 
-const PRAKTIJKVORMEN = [
+export const PRAKTIJKVORMEN = [
   { value: 'bv_niet_uitvoerend',          label: 'BV – niet uitvoerend fysiotherapeut' },
   { value: 'bv_uitvoerend',               label: 'BV – uitvoerend fysiotherapeut' },
   { value: 'eenmanszaak_niet_uitvoerend', label: 'Eenmanszaak – niet uitvoerend fysiotherapeut' },

@@ -7,7 +7,17 @@ import Register from './pages/Register'
 import ProfileSetup from './pages/ProfileSetup'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
+import AdminUpload from './pages/AdminUpload'
+import AdminDocumenten from './pages/AdminDocumenten'
 import Layout from './components/layout/Layout'
+
+function AdminRoute({ children }) {
+  const { user, loading, isAdmin } = useAuth()
+  if (loading) return <div className="p-8 text-slate-500">Laden...</div>
+  if (!user) return <Navigate to="/login" replace />
+  if (!isAdmin) return <Navigate to="/" replace />
+  return children
+}
 
 function ProtectedRoute({ children, requireProfile = true }) {
   const { user, loading } = useAuth()
@@ -42,6 +52,8 @@ export default function App() {
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/instellingen" element={<Settings />} />
+          <Route path="/admin/uploaden" element={<AdminRoute><AdminUpload /></AdminRoute>} />
+          <Route path="/admin/documenten" element={<AdminRoute><AdminDocumenten /></AdminRoute>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

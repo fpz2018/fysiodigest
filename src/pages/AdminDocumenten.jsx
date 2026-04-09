@@ -84,6 +84,18 @@ export default function AdminDocumenten() {
             className="bg-navy text-white px-4 py-2 rounded text-sm font-medium hover:opacity-90 disabled:opacity-50">
             {rssBezig ? 'Bezig...' : 'RSS nu verwerken'}
           </button>
+          <button onClick={async () => {
+            setRssMelding('Digest versturen...')
+            try {
+              const res = await fetch('/.netlify/functions/verstuur-digest')
+              const data = await res.json()
+              if (data.success) setRssMelding(`Digest verstuurd naar ${data.verstuurd} gebruiker(s).`)
+              else setRssMelding('Fout: ' + (data.error || 'onbekend'))
+            } catch (e) { setRssMelding('Fout: ' + e.message) }
+          }}
+            className="bg-navy text-white px-4 py-2 rounded text-sm font-medium hover:opacity-90">
+            Digest nu versturen
+          </button>
           <Link to="/admin/uploaden" className="bg-primary text-white px-4 py-2 rounded text-sm font-medium hover:opacity-90">
             + Nieuw document
           </Link>

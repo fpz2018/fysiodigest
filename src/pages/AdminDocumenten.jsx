@@ -48,26 +48,30 @@ export default function AdminDocumenten() {
   const triggerRss = async () => {
     setRssBezig(true); setRssMelding('Bezig...')
     let totaal = 0
+    let offset = 0
     let batch = 0
-    const maxBatches = 20
+    const maxBatches = 30
     try {
       while (batch < maxBatches) {
         batch++
-        const res = await fetch('/.netlify/functions/verwerk-rss?max=3')
+        const res = await fetch(`/.netlify/functions/verwerk-rss?max=3&bron_offset=${offset}`)
         const tekst = await res.text()
         let data = {}
         try { data = JSON.parse(tekst) } catch { /* leeg */ }
         if (!res.ok || !data.success) {
-          setRssMelding(`Fout (${res.status}) in batch ${batch}: ${data.error || tekst.slice(0, 200) || 'geen response'}. Totaal tot nu: ${totaal}`)
-          return
+          setRssMelding(`Fout (${res.status}) in batch ${batch} (offset ${offset}): ${data.error || tekst.slice(0, 200) || 'geen response'}. Totaal: ${totaal}. Opnieuw proberen met hogere offset...`)
+          offset += 1
+          if (offset > 50) return
+          continue
         }
         totaal += data.nieuwe_items || 0
-        setRssMelding(`Batch ${batch}: +${data.nieuwe_items} items (totaal ${totaal})...`)
-        if ((data.nieuwe_items || 0) === 0) break
+        setRssMelding(`Batch ${batch}: +${data.nieuwe_items} items (totaal ${totaal}, bron ${offset}/${data.totaal_bronnen})...`)
+        if (data.volgende_bron_offset === null || data.volgende_bron_offset === undefined) break
+        offset = data.volgende_bron_offset
       }
       setRssMelding(`Klaar. ${totaal} nieuwe items verwerkt in ${batch} batches.`)
     } catch (e) {
-      setRssMelding(`Fout: ${e.message}. Totaal tot nu: ${totaal}`)
+      setRssMelding(`Fout: ${e.message}. Totaal: ${totaal}`)
     } finally { setRssBezig(false) }
   }
 

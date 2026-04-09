@@ -5,9 +5,11 @@ import { verwerkItem } from './_utils/claudeVerwerker.js'
 export const handler = async (event) => {
   const userId = event?.queryStringParameters?.user_id || null
   const maxItems = parseInt(event?.queryStringParameters?.max || '15', 10)
+  const bronOffset = parseInt(event?.queryStringParameters?.bron_offset || '0', 10)
+  const deadline = Date.now() + 8000
 
   try {
-    const stats = await verwerkAlleGebruikers(userId, maxItems)
+    const stats = await verwerkAlleGebruikers(userId, maxItems, bronOffset, deadline)
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -23,27 +25,39 @@ export const handler = async (event) => {
   }
 }
 
-async function verwerkAlleGebruikers(filterUserId, maxItems) {
+async function verwerkAlleGebruikers(filterUserId, maxItems, bronOffset, deadline) {
   let query = supabase.from('profiles').select('*')
   if (filterUserId) query = query.eq('user_id', filterUserId)
   const { data: profielen, error } = await query
   if (error) throw error
 
   let totaal = 0
+  let volgendeOffset = null
+  let totaalBronnen = 0
   for (const profiel of profielen || []) {
-    totaal += await verwerkGebruiker(profiel, maxItems)
+    const r = await verwerkGebruiker(profiel, maxItems - totaal, bronOffset, deadline)
+    totaal += r.nieuw
+    totaalBronnen = r.totaalBronnen
+    if (r.volgendeOffset !== null) volgendeOffset = r.volgendeOffset
+    if (Date.now() > deadline) break
   }
-  return { gebruikers: (profielen || []).length, nieuwe_items: totaal }
+  return {
+    gebruikers: (profielen || []).length,
+    nieuwe_items: totaal,
+    volgende_bron_offset: volgendeOffset,
+    totaal_bronnen: totaalBronnen,
+  }
 }
 
-async function verwerkGebruiker(profiel, maxItems) {
+async function verwerkGebruiker(profiel, maxItems, bronOffset, deadline) {
   const { data: bronnen } = await supabase
     .from('rss_sources')
     .select('*')
     .eq('user_id', profiel.user_id)
     .eq('actief', true)
+    .order('id')
 
-  if (!bronnen || bronnen.length === 0) return 0
+  if (!bronnen || bronnen.length === 0) return { nieuw: 0, volgendeOffset: null, totaalBronnen: 0 }
 
   const { data: bestaandeItems } = await supabase
     .from('digest_items')
@@ -52,13 +66,17 @@ async function verwerkGebruiker(profiel, maxItems) {
 
   const bestaandeUrls = new Set((bestaandeItems || []).map(i => i.bron_url))
   let nieuw = 0
+  let i = bronOffset
 
-  for (const bron of bronnen) {
+  for (; i < bronnen.length; i++) {
     if (nieuw >= maxItems) break
+    if (Date.now() > deadline) break
+    const bron = bronnen[i]
     const items = await fetchRssFeed(bron.url)
 
     for (const item of items) {
       if (nieuw >= maxItems) break
+      if (Date.now() > deadline) break
       if (!item.bron_url) continue
       if (bestaandeUrls.has(item.bron_url)) continue
 
@@ -80,8 +98,9 @@ async function verwerkGebruiker(profiel, maxItems) {
         opgeslagen: false,
       })
       if (!insErr) nieuw++
-      await new Promise(r => setTimeout(r, 300))
+      await new Promise(r => setTimeout(r, 200))
     }
   }
-  return nieuw
+  const volgendeOffset = i >= bronnen.length ? null : i
+  return { nieuw, volgendeOffset, totaalBronnen: bronnen.length }
 }

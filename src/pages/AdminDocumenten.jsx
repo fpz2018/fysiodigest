@@ -46,16 +46,28 @@ export default function AdminDocumenten() {
   }
 
   const triggerRss = async () => {
-    setRssBezig(true); setRssMelding('')
+    setRssBezig(true); setRssMelding('Bezig...')
+    let totaal = 0
+    let batch = 0
+    const maxBatches = 20
     try {
-      const res = await fetch('/.netlify/functions/verwerk-rss')
-      const tekst = await res.text()
-      let data = {}
-      try { data = JSON.parse(tekst) } catch { /* leeg */ }
-      if (res.ok && data.success) setRssMelding(`Klaar. ${data.nieuwe_items} nieuwe items voor ${data.gebruikers} gebruiker(s).`)
-      else setRssMelding(`Fout (${res.status}): ${data.error || tekst.slice(0, 200) || 'geen response'}`)
+      while (batch < maxBatches) {
+        batch++
+        const res = await fetch('/.netlify/functions/verwerk-rss?max=3')
+        const tekst = await res.text()
+        let data = {}
+        try { data = JSON.parse(tekst) } catch { /* leeg */ }
+        if (!res.ok || !data.success) {
+          setRssMelding(`Fout (${res.status}) in batch ${batch}: ${data.error || tekst.slice(0, 200) || 'geen response'}. Totaal tot nu: ${totaal}`)
+          return
+        }
+        totaal += data.nieuwe_items || 0
+        setRssMelding(`Batch ${batch}: +${data.nieuwe_items} items (totaal ${totaal})...`)
+        if ((data.nieuwe_items || 0) === 0) break
+      }
+      setRssMelding(`Klaar. ${totaal} nieuwe items verwerkt in ${batch} batches.`)
     } catch (e) {
-      setRssMelding('Fout: ' + e.message)
+      setRssMelding(`Fout: ${e.message}. Totaal tot nu: ${totaal}`)
     } finally { setRssBezig(false) }
   }
 

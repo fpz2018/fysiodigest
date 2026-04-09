@@ -19,6 +19,22 @@ function AdminRoute({ children }) {
   return children
 }
 
+function OnboardingRoute({ children }) {
+  const { user, loading } = useAuth()
+  const [heeftProfiel, setHeeftProfiel] = useState(null)
+
+  useEffect(() => {
+    if (!user) { setHeeftProfiel(false); return }
+    supabase.from('profiles').select('user_id').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => setHeeftProfiel(!!data))
+  }, [user])
+
+  if (loading || heeftProfiel === null) return <div className="p-8 text-slate-500">Laden...</div>
+  if (!user) return <Navigate to="/login" replace />
+  if (heeftProfiel) return <Navigate to="/" replace />
+  return children
+}
+
 function ProtectedRoute({ children, requireProfile = true }) {
   const { user, loading } = useAuth()
   const [profile, setProfile] = useState(undefined)
@@ -26,7 +42,7 @@ function ProtectedRoute({ children, requireProfile = true }) {
 
   useEffect(() => {
     if (!user) { setProfile(null); return }
-    supabase.from('profiles').select('id').eq('user_id', user.id).maybeSingle()
+    supabase.from('profiles').select('user_id').eq('user_id', user.id).maybeSingle()
       .then(({ data }) => setProfile(data))
   }, [user])
 
@@ -47,10 +63,11 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/onboarding" element={
-          <ProtectedRoute requireProfile={false}><ProfileSetup /></ProtectedRoute>
+          <OnboardingRoute><ProfileSetup /></OnboardingRoute>
         } />
         <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
           <Route path="/instellingen" element={<Settings />} />
           <Route path="/admin/uploaden" element={<AdminRoute><AdminUpload /></AdminRoute>} />
           <Route path="/admin/documenten" element={<AdminRoute><AdminDocumenten /></AdminRoute>} />

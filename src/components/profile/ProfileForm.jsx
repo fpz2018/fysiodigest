@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
-import { DEFAULT_VOORKEUREN } from '../../lib/categorieVoorkeuren'
+import { DEFAULT_VOORKEUREN, CATEGORIEEN, BELANG_OPTIES, DREMPEL_OPTIES } from '../../lib/categorieVoorkeuren'
 
 export const SPECIALISATIE_GROEPEN = [
   {
@@ -121,6 +121,12 @@ export default function ProfileForm({ initial = null }) {
   const [overigVerz, setOverigVerz] = useState('')
   const [interesse, setInteresse] = useState(initial?.interessegebieden || '')
   const [output, setOutput] = useState(initial?.output_formaat || 'bullet')
+  const [voorkeuren, setVoorkeuren] = useState(() => {
+    const init = initial?.categorie_voorkeuren || {}
+    const out = {}
+    for (const c of CATEGORIEEN) out[c.key] = { ...DEFAULT_VOORKEUREN[c.key], ...(init[c.key] || {}) }
+    return out
+  })
   const [bronnen, setBronnen] = useState(STANDAARD_BRONNEN.map(b => ({ ...b, actief: true })))
   const [extraNaam, setExtraNaam] = useState('')
   const [extraUrl, setExtraUrl] = useState('')
@@ -151,7 +157,7 @@ export default function ProfileForm({ initial = null }) {
       zorgverzekeraars: finalVerz,
       interessegebieden: interesse,
       output_formaat: output,
-      categorie_voorkeuren: initial?.categorie_voorkeuren || DEFAULT_VOORKEUREN,
+      categorie_voorkeuren: voorkeuren,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' })
     if (pErr) { setFout('Opslaan profiel mislukt: ' + pErr.message); setBezig(false); return }
@@ -167,17 +173,17 @@ export default function ProfileForm({ initial = null }) {
       if (bErr) { setFout('Opslaan bronnen mislukt: ' + bErr.message); setBezig(false); return }
     }
     setBezig(false)
-    navigate('/')
+    navigate('/', { replace: true })
   }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-8 w-full max-w-2xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-navy">Profiel instellen</h1>
-        <span className="text-sm text-slate-500">Stap {stap} van 5</span>
+        <span className="text-sm text-slate-500">Stap {stap} van 6</span>
       </div>
       <div className="h-1 bg-slate-100 rounded mb-6">
-        <div className="h-1 bg-primary rounded transition-all" style={{ width: `${(stap/5)*100}%` }} />
+        <div className="h-1 bg-primary rounded transition-all" style={{ width: `${(stap/6)*100}%` }} />
       </div>
 
       {fout && <div className="bg-red-50 text-red-700 text-sm p-3 rounded mb-4">{fout}</div>}
@@ -287,6 +293,50 @@ export default function ProfileForm({ initial = null }) {
       )}
 
       {stap === 5 && (
+        <div className="space-y-4">
+          <h2 className="font-semibold text-lg">Mijn prioriteiten</h2>
+          <p className="text-sm text-slate-600">Bepaal per categorie hoe belangrijk het voor je is en vanaf welke prioriteit je items wil zien.</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs uppercase text-slate-500">
+                <tr><th className="py-2 pr-3">Categorie</th><th className="py-2 pr-3">Belang</th><th className="py-2">Toon mij...</th></tr>
+              </thead>
+              <tbody>
+                {CATEGORIEEN.map(c => {
+                  const v = voorkeuren[c.key]
+                  return (
+                    <tr key={c.key} className="border-t border-slate-100">
+                      <td className="py-2 pr-3 font-medium">{c.label}</td>
+                      <td className="py-2 pr-3">
+                        <div className="inline-flex rounded border border-slate-200 overflow-hidden">
+                          {BELANG_OPTIES.map(b => (
+                            <button key={b.value} type="button"
+                              onClick={() => setVoorkeuren(p => ({ ...p, [c.key]: { ...p[c.key], belang: b.value } }))}
+                              className={`px-2 py-1 text-xs ${v.belang === b.value ? 'bg-primary text-white' : 'bg-white hover:bg-slate-50'}`}>
+                              <span className="font-mono mr-1">{b.dots}</span>{b.label}
+                            </button>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-2">
+                        <select value={v.drempel}
+                          onChange={e => setVoorkeuren(p => ({ ...p, [c.key]: { ...p[c.key], drempel: e.target.value } }))}
+                          className="border border-slate-300 rounded px-2 py-1 text-sm">
+                          {DREMPEL_OPTIES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                        </select>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <button type="button" onClick={() => setVoorkeuren({ ...DEFAULT_VOORKEUREN })}
+            className="text-xs text-slate-600 underline">Reset naar standaard</button>
+        </div>
+      )}
+
+      {stap === 6 && (
         <div className="space-y-6">
           <h2 className="font-semibold text-lg">Bronnen</h2>
           <p className="text-sm text-slate-600">Selecteer welke bronnen FysioDigest voor je moet monitoren.</p>
@@ -327,7 +377,7 @@ export default function ProfileForm({ initial = null }) {
       <div className="flex justify-between mt-8">
         <button onClick={vorige} disabled={stap === 1}
           className="px-4 py-2 text-slate-600 disabled:opacity-30">Vorige</button>
-        {stap < 5 ? (
+        {stap < 6 ? (
           <button onClick={volgende} className="bg-primary text-white px-6 py-2 rounded font-medium hover:opacity-90">
             Volgende
           </button>

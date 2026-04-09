@@ -81,6 +81,7 @@ async function verstuurVoorGebruiker(profiel, testMode) {
   const html = buildEmailHtml({
     naam: profiel.naam, weekNummer, datumRange, items,
     appUrl: process.env.APP_URL || '',
+    outputFormaat: profiel.output_formaat || 'proza',
   })
   const text = buildEmailText({ naam: profiel.naam, weekNummer, items })
 

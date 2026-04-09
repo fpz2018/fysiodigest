@@ -80,6 +80,27 @@ export default function AdminDocumenten() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-navy">Documentenoverzicht</h1>
         <div className="flex gap-2">
+          <button onClick={async () => {
+            if (!confirm('Alle bestaande items opnieuw verwerken met huidige output_formaat?')) return
+            setRssMelding('Herverwerken...')
+            let offset = 0, totaal = 0, batch = 0
+            try {
+              while (batch < 30) {
+                batch++
+                const res = await fetch(`/.netlify/functions/herverwerk-items?max=5&offset=${offset}`)
+                const data = await res.json()
+                if (!data.success) { setRssMelding('Fout: ' + (data.error || 'onbekend')); return }
+                totaal += data.bijgewerkt || 0
+                setRssMelding(`Batch ${batch}: ${totaal} items bijgewerkt (van ${data.totaal})...`)
+                if (data.volgende_offset === null || data.volgende_offset === undefined) break
+                offset = data.volgende_offset
+              }
+              setRssMelding(`Klaar. ${totaal} items herverwerkt.`)
+            } catch (e) { setRssMelding('Fout: ' + e.message) }
+          }}
+            className="bg-slate-600 text-white px-4 py-2 rounded text-sm font-medium hover:opacity-90">
+            Herverwerk items
+          </button>
           <button onClick={triggerRss} disabled={rssBezig}
             className="bg-navy text-white px-4 py-2 rounded text-sm font-medium hover:opacity-90 disabled:opacity-50">
             {rssBezig ? 'Bezig...' : 'RSS nu verwerken'}

@@ -1,4 +1,33 @@
-export function buildEmailHtml({ naam, weekNummer, datumRange, items, appUrl }) {
+function renderPraktijkimpact(tekst, formaat) {
+  const t = String(tekst || '')
+  if (!t) return ''
+  if (formaat === 'bullet') {
+    const delen = t.split('|').map(s => s.trim()).filter(Boolean)
+    return `<ul style="margin: 0 0 10px 18px; padding: 0; font-size: 14px; color: #374151; line-height: 1.6;">${delen.map(d => `<li style="margin-bottom: 4px;">${escapeHtml(d)}</li>`).join('')}</ul>`
+  }
+  if (formaat === 'soap') {
+    const delen = t.split('|').map(s => s.trim()).filter(Boolean)
+    const rows = delen.map(d => {
+      const m = d.match(/^([SOAP])\s*:\s*(.*)$/i)
+      const label = m ? m[1].toUpperCase() : ''
+      const waarde = m ? m[2] : d
+      return `<tr><td style="padding: 4px 8px 4px 0; font-weight: 700; color: #1E3A5F; vertical-align: top; width: 24px;">${label}</td><td style="padding: 4px 0; color: #374151;">${escapeHtml(waarde)}</td></tr>`
+    }).join('')
+    return `<table cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.5; margin-bottom: 10px;">${rows}</table>`
+  }
+  if (formaat === 'tabel') {
+    const delen = t.split('|').map(s => s.trim()).filter(Boolean)
+    const rows = delen.map(d => {
+      const [k, ...rest] = d.split(':')
+      const waarde = rest.join(':').trim()
+      return `<tr><td style="padding: 4px 10px 4px 0; font-weight: 600; color: #1E3A5F; vertical-align: top;">${escapeHtml((k || '').trim())}</td><td style="padding: 4px 0; color: #374151;">${escapeHtml(waarde)}</td></tr>`
+    }).join('')
+    return `<table cellpadding="0" cellspacing="0" style="font-size: 14px; line-height: 1.5; margin-bottom: 10px; border-collapse: collapse;">${rows}</table>`
+  }
+  return `<div style="font-size: 14px; color: #374151; line-height: 1.6; margin-bottom: 10px;">${escapeHtml(t)}</div>`
+}
+
+export function buildEmailHtml({ naam, weekNummer, datumRange, items, appUrl, outputFormaat = 'proza' }) {
   const roodItems = items.filter(i => i.prioriteit === 'rood')
   const geelItems = items.filter(i => i.prioriteit === 'geel')
   const grijsItems = items.filter(i => i.prioriteit === 'grijs')
@@ -14,9 +43,7 @@ export function buildEmailHtml({ naam, weekNummer, datumRange, items, appUrl }) 
         <div style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 8px; line-height: 1.4;">
           ${escapeHtml(item.headline || item.titel || '')}
         </div>
-        <div style="font-size: 14px; color: #374151; line-height: 1.6; margin-bottom: 10px; white-space: pre-line;">
-          ${escapeHtml(item.praktijkimpact || '')}
-        </div>
+        ${renderPraktijkimpact(item.praktijkimpact, outputFormaat)}
         ${item.bron_url ? `<a href="${item.bron_url}" style="font-size: 13px; color: #2563EB; text-decoration: none; font-weight: 500;">→ Lees volledig artikel</a>` : ''}
       </td></tr>
       <tr><td style="height: 12px;"></td></tr>

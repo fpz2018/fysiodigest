@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useDigestItems } from '../hooks/useDigestItems'
 import ItemKaart from '../components/dashboard/ItemKaart'
+import { supabase } from '../lib/supabase'
 
 const CATEGORIEEN = [
   'alle', 'richtlijnen', 'regelgeving', 'wetenschap', 'vakbladen',
@@ -23,6 +24,13 @@ export default function Dashboard() {
   } = useDigestItems(user?.id, weekOffset)
 
   const [rssBezig, setRssBezig] = useState(false)
+  const [outputFormaat, setOutputFormaat] = useState('proza')
+
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('profiles').select('output_formaat').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => setOutputFormaat(data?.output_formaat || 'proza'))
+  }, [user?.id])
 
   const triggerRss = async () => {
     setRssBezig(true)
@@ -113,7 +121,7 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {items.map(item => (
-            <ItemKaart key={item.id} item={item} userId={user.id} onUpdate={updateItem} />
+            <ItemKaart key={item.id} item={item} userId={user.id} onUpdate={updateItem} outputFormaat={outputFormaat} />
           ))}
         </div>
       )}

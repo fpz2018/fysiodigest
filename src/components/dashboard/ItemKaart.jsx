@@ -8,7 +8,39 @@ const PRIO_STYLE = {
   grijs: { border: 'border-gray-300',  bg: 'bg-white',     icon: '⚪' },
 }
 
-export default function ItemKaart({ item, userId, onUpdate }) {
+function RenderPraktijkimpact({ tekst, formaat }) {
+  const t = String(tekst || '')
+  if (!t) return null
+  if (formaat === 'bullet') {
+    const delen = t.split('|').map(s => s.trim()).filter(Boolean)
+    return <ul className="list-disc pl-5 text-sm text-gray-600 mb-4 space-y-1">{delen.map((d, i) => <li key={i}>{d}</li>)}</ul>
+  }
+  if (formaat === 'soap') {
+    const delen = t.split('|').map(s => s.trim()).filter(Boolean)
+    return (
+      <table className="text-sm text-gray-600 mb-4">
+        <tbody>{delen.map((d, i) => {
+          const m = d.match(/^([SOAP])\s*:\s*(.*)$/i)
+          return <tr key={i}><td className="pr-2 font-bold text-navy align-top">{m ? m[1].toUpperCase() : ''}</td><td className="py-0.5">{m ? m[2] : d}</td></tr>
+        })}</tbody>
+      </table>
+    )
+  }
+  if (formaat === 'tabel') {
+    const delen = t.split('|').map(s => s.trim()).filter(Boolean)
+    return (
+      <table className="text-sm text-gray-600 mb-4">
+        <tbody>{delen.map((d, i) => {
+          const [k, ...rest] = d.split(':')
+          return <tr key={i}><td className="pr-3 font-semibold text-navy align-top">{(k || '').trim()}</td><td className="py-0.5">{rest.join(':').trim()}</td></tr>
+        })}</tbody>
+      </table>
+    )
+  }
+  return <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">{t}</p>
+}
+
+export default function ItemKaart({ item, userId, onUpdate, outputFormaat = 'proza' }) {
   const s = PRIO_STYLE[item.prioriteit] || PRIO_STYLE.grijs
   const [notitieOpen, setNotitieOpen] = useState(false)
   const [notitie, setNotitie] = useState('')
@@ -74,7 +106,7 @@ export default function ItemKaart({ item, userId, onUpdate }) {
 
       <h3 className="text-base font-semibold text-gray-900 mb-2">{item.headline || item.titel}</h3>
       {item.praktijkimpact && (
-        <p className="text-sm text-gray-600 mb-4 whitespace-pre-line font-mono-safe">{item.praktijkimpact}</p>
+        <RenderPraktijkimpact tekst={item.praktijkimpact} formaat={outputFormaat} />
       )}
 
       <div className="flex flex-wrap gap-2 text-xs">
